@@ -1,4 +1,4 @@
-/* WebTool - Version A1 */
+/* WebTool - Version A2 */
 
 // Use strict mode
 "use strict";
@@ -31,7 +31,7 @@ let $WEBTOOL_WIN = {
 };
 
 // Main
-void function main() {
+void function main(i) {
 
     // Function for checking the data type
     const checkDataType = (val, typ) => {
@@ -85,6 +85,22 @@ void function main() {
         window.close();
     };
 
+    // Do something every specified milliseconds
+    $WEBTOOL_WIN.update = (ms, callback) => {
+        // Checks if `ms` is a number
+        if (!checkDataType(ms, "num")) {
+            throw new Error("The first argument must be a number");
+        }
+
+        // Checks is `callback` is a function
+        if (!checkDataType(callback, "func")) {
+            throw new Error("The second argument must be a callback function");
+        }
+
+        // Set interval
+        window.setInterval(callback, ms);
+    };
+
     // Function for returning selector methods
     const selectorMethods = (elements) => {
         return {
@@ -99,7 +115,7 @@ void function main() {
                     let finalReturn = [];
 
                     // Loop through the elements
-                    for (let i = 0; i < elements.length; i++) {
+                    for (i = 0; i < elements.length; i++) {
                         if (str) {
                             // If `str` is defined, set all the elements' html to the value in `str`
                             elements[i].innerHTML = str;
@@ -132,7 +148,7 @@ void function main() {
                 // If there are multiple elements selected
                 if (elements.length) {
                     // Loop through all elements selected
-                    for (let i = 0; i < elements.length; i++) {
+                    for (i = 0; i < elements.length; i++) {
                         // Add `str` to the end of inner HTML
                         elements[i].innerHTML += str;
                     }
@@ -152,7 +168,7 @@ void function main() {
                     // If user selected multiple elements
                     if (elements.length) {
                         // Loop through all the elements
-                        for (let i = 0; i < elements.length; i++) {
+                        for (i = 0; i < elements.length; i++) {
                             // Set the CSS
                             elements[i].style = `${prop}: ${val};`;
                         }
@@ -171,15 +187,15 @@ void function main() {
                     let elStyle = "";
 
                     // Loop through the object
-                    for (const i in prop) {
+                    for (const i2 in prop) {
                         // Add properties and values to the `elStyle` string
-                        elStyle += `${i}: ${prop[i]};`;
+                        elStyle += `${i2}: ${prop[i2]};`;
                     }
 
                     // If user selected multiple elements
                     if (elements.length) {
                         // Loop through the elements
-                        for (let i = 0; i < elements.length; i++) {
+                        for (i = 0; i < elements.length; i++) {
                             // Set the CSS of all the elements
                             elements[i].style = elStyle;
                         }
@@ -201,7 +217,7 @@ void function main() {
                     let finalReturn = [];
 
                     // Loops through the elements
-                    for (let i = 0; i < elements.length; i++) {
+                    for (i = 0; i < elements.length; i++) {
                         if (str) {
                             // If `str` is defined, set the text to the value of `str`
                             elements[i].textContent = str;
@@ -234,7 +250,7 @@ void function main() {
                 // If user selected multiple elements
                 if (elements.length) {
                     // Loop through the elements
-                    for (let i = 0; i < elements.length; i++) {
+                    for (i = 0; i < elements.length; i++) {
                         // Add `str` to the end of text content
                         elements[i].textContent += str;
                     }
@@ -267,7 +283,7 @@ void function main() {
                 // If user selected multiple elements
                 if (elements.length) {
                     // Loops through the elements
-                    for (let i = 0; i < elements.length; i++) {
+                    for (i = 0; i < elements.length; i++) {
                         // Set the class of the elements
                         elements[i].className = cls;
                     }
@@ -277,6 +293,27 @@ void function main() {
                 else {
                     // Set the class of the elements
                     elements.className = cls;
+                }
+            },
+
+            // Get the class of an element
+            getClass: () => {
+                // If user selected multiple elements
+                if (elements.length) {
+                    // Final return, will return a list of all classes
+                    let finalReturn = [];
+
+                    // Loops through the element
+                    for (i = 0; i < elements.length; i++) {
+                        finalReturn.push(Array.from(elements[i].classList));
+                    }
+
+                    return finalReturn;
+                }
+
+                // If one element selected
+                else {
+                    return Array.from(elements.classList);
                 }
             },
 
@@ -294,7 +331,7 @@ void function main() {
                     // If more than one element is selected
                     if (elements.length) {
                         // Loop through the elements
-                        for (let i = 0; i < elements.length; i++) {
+                        for (i = 0; i < elements.length; i++) {
                             // Set class name
                             elements[i].className += ` ${cls}`;
                         }
@@ -312,14 +349,14 @@ void function main() {
                     let final = ``;
 
                     // Loop through the array
-                    for (const i of cls) {
-                        final += ` ${cls[i]}`;
+                    for (const i2 of cls) {
+                        final += ` ${cls[i2]}`;
                     }
 
                     // If multiple elements selected
                     if (elements.length) {
                         // Loop through the elements
-                        for (let i = 0; i < elements.length; i++) {
+                        for (i = 0; i < elements.length; i++) {
                             // Set the class name
                             elements[i].className = final;
                         }
@@ -345,7 +382,7 @@ void function main() {
                         // If more than one element selected
                         if (elements.length) {
                             // Loop through the elements
-                            for (let i = 0; i < elements.length; i++) {
+                            for (i = 0; i < elements.length; i++) {
                                 finalReturn.push(elements[i][name]);
                             }
 
@@ -369,7 +406,7 @@ void function main() {
                         // If more than one element is selected
                         if (elements.length) {
                             // Loop through the elements
-                            for (let i = 0; i < elements.length; i++) {
+                            for (i = 0; i < elements.length; i++) {
                                 elements[i].setAttribute(name, val);
                             }
                         }
@@ -388,20 +425,20 @@ void function main() {
                 // (this allows the user to set multiple attributes)
                 if (checkDataType(name, "obj")) {
                     // Loop through `name` object
-                    for (const i in name) {
+                    for (const i2 in name) {
                         // If multiple elements selected
                         if (elements.length) {
                             // Loop through the elements
                             for (let j = 0; j < elements.length; j++) {
                                 // Set the attributes to each element
-                                elements[j].setAttribute(i, name[i]);
+                                elements[j].setAttribute(i2, name[i2]);
                             }
                         }
 
                         // If one element selected
                         else {
                             // Set the attribute
-                            elements.setAttribute(i, name[i]);
+                            elements.setAttribute(i2, name[i]);
                         }
                     }
 
@@ -428,7 +465,7 @@ void function main() {
                 // If the user selected multiple elements
                 if (elements.length) {
                     // Loop through the elements
-                    for (let i = 0; i < elements.length; i++) {
+                    for (i = 0; i < elements.length; i++) {
                         // Add event listener
                         elements[i].addEventListener(evt, code);
                     }
@@ -438,6 +475,24 @@ void function main() {
                 else {
                     // Add event listener
                     elements.addEventListener(evt, code);
+                }
+            },
+
+            // Removing an element
+            remove: () => {
+                // If user selected multiple elements
+                if (elements.length) {
+                    // Loop through all the elements
+                    for (i = 0; i < elements.length; i++) {
+                        // Remove all elements selected
+                        elements[i].remove();
+                    }
+                }
+
+                // Otherwise
+                else {
+                    // Remove the element
+                    elements.remove();
                 }
             }
         };
@@ -502,12 +557,12 @@ void function main() {
         // Store the object's values
         let cls;
         const el = info.name,
-                to = info.append,
-                id = info.id,
+              to = info.append,
+              id = info.id,
             attr = info.attr,
             html = info.html,
             text = info.text,
-                css = info.css;
+              css = info.css;
         
         // Set `cls` variable
         for (; info.cls || info["class"] || info.className;) {
@@ -526,7 +581,7 @@ void function main() {
         const elTo = document.querySelectorAll(to);
 
         // Loop through append elements
-        for (let i = 0; i < elTo.length; i++) {
+        for (i = 0; i < elTo.length; i++) {
             // Create the element
             const element = document.createElement(el);
 
@@ -608,13 +663,128 @@ void function main() {
             elTo[i].appendChild(element);
         }
     };
+    
+    // Create a list
+    $WEBTOOL_DOC.createList = (info) => {
+        // Checks if user provided an object
+        if (!checkDataType(info, "obj")) {
+            throw new Error("The argument must be an object");
+        }
+
+        // Checks for incorrect data types
+        if (!checkDataType(info.li, "arr")) {
+            throw new Error("The li property must be an array");
+        }
+        if (!checkDataType(info.type, "str")) {
+            throw new Error("The type property must be a string")
+        }
+        
+        // Variables
+        let list, final = ``, i2 = -1;
+
+        // Create DOM element
+        switch (info.type.toLowerCase()) {
+            case "ul":
+                list = document.createElement("ul");
+                break;
+            case "ol":
+                list = document.createElement("ol");
+                break;
+            default:
+                throw new Error("The type property should be 'ul' or 'ol'");
+                break;
+        }
+
+        // Loop through the list and add HTML content to the DOM element
+        while (++i2 < info.li.length) {
+            list.innerHTML += `<li>${info.li[i2]}</li>`;
+        }
+        
+        // The user might put an invalid selector
+        try {
+            // Append list to the specified elements
+            const elTo = document.querySelectorAll(info.append);
+            for (i = 0; i < elTo.length; i++) {
+                elTo[i].appendChild(list);
+            }
+        }
+        
+        // If invalid selector for `info.append`, throw an error
+        catch (err) {
+            throw new Error("Invalid selector for the append property");
+        }
+    };
+
+    // Create a table
+    $WEBTOOL_DOC.createTable = (info) => {
+        // Final
+        let final = `<table>`;
+        
+        // Check data types
+        if (!checkDataType(info, "obj")) {
+            throw new Error("The argument must be an object");
+        }
+        if (!checkDataType(info.data, "arr")) {
+            throw new Error("The data property must be an array");
+        }
+        if (!checkDataType(info.append, "str")) {
+            throw new Error("The append property must be a string");
+        }
+        
+        // If data is an array
+        if (checkDataType(info.data, "arr")) {
+            // Append element
+            const elTo = document.querySelectorAll(info.append);
+
+            // If user wants the first row to be the table heading
+            if (info.hasHeading) {
+                final += `<thead><tr>`;
+                for (i = 0; i < info.data[0].length; i++) {
+                    final += `<th>${info.data[0][i]}</th>`;
+                }
+                final += `</tr></thead><tbody>`;
+            }
+            
+            // Otherwise
+            else {
+                final += `<tbody>`;
+            }
+
+            // Put tbody element
+            void function tbody() {
+                // Change `i` depending on whether the user wants a heading
+                !!info.hasHeading ? i = 1 : i = 0;
+
+                // Loop through the data
+                for (; i < info.data.length; i++) {
+                    let tr = `<tr>`;
+                    for (let j = 0; j < info.data[i].length; j++) {
+                        tr += `<td>${info.data[i][j]}</td>`;
+                    }
+                    tr += `</tr>`;
+                    final += tr;
+                }
+
+                // Final touches
+                final += `</tbody></table>`;
+            }();
+
+            // Loop through all the elements
+            for (i = 0; i < elTo.length; i++) {
+                elTo[i].innerHTML += final;
+            }
+
+            // Return
+            return;
+        }
+    };
 
     // Print things into body element
     $WEBTOOL_DOC.print = (txt) => {
         document.body.innerHTML += txt;
     };
 
-}();
+}(0);
 
 // Define $doc
 const $doc = $WEBTOOL_DOC;
