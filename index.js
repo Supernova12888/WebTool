@@ -1,4 +1,4 @@
-/* WebTool - Version A2 */
+/* WebTool - Version A3 */
 
 // Use strict mode
 "use strict";
@@ -369,35 +369,23 @@ void function main(i) {
                 }
             },
 
-            // Getting or setting an attribute
-            attr: (name, val) => {
+            // Setting an attribute
+            setAttr: (name, val) => {
+                console.log(val);
+
+                // If `name` is an invalid data type, throw an error
+                if (!name) {
+                    throw new Error("The first argument must be a string or an object");
+                }
+                if (!checkDataType(name, "str") && !checkDataType(name, "obj")) {
+                    throw new Error("The first argument must be a string or an object");
+                }
+                
                 // If `name` is a string
                 if (checkDataType(name, "str")) {
-                    // If `val` is not a string
-                    // (this will return the current value of the attribute)
+                    // If `val` is not a string, throw an error
                     if (!checkDataType(val, "str")) {
-                        // Final return value
-                        let finalReturn = [];
-
-                        // If more than one element selected
-                        if (elements.length) {
-                            // Loop through the elements
-                            for (i = 0; i < elements.length; i++) {
-                                finalReturn.push(elements[i][name]);
-                            }
-
-                            // Return all attribute values
-                            return finalReturn;
-                        }
-
-                        // If one element selected
-                        else {
-                            // Set `finalReturn` to the value of the attribute
-                            finalReturn = elements[name];
-
-                            // Return value of attribute
-                            return finalReturn;
-                        }
+                        throw new Error("The second argument must be a string");
                     }
 
                     // If `val` is a string
@@ -445,9 +433,32 @@ void function main(i) {
                     // Stop function
                     return;
                 }
+            },
 
-                // If `name` is neither a string nor an object, throw an error
-                throw new Error("The first argument must be a string or an object");
+            // Getting an attribute
+            getAttr: (name) => {
+                // Final return value
+                let finalReturn = [];
+
+                // If more than one element selected
+                if (elements.length) {
+                    // Loop through the elements
+                    for (i = 0; i < elements.length; i++) {
+                        finalReturn.push(elements[i][name]);
+                    }
+
+                    // Return all attribute values
+                    return finalReturn;
+                }
+
+                // If one element selected
+                else {
+                    // Set `finalReturn` to the value of the attribute
+                    finalReturn = elements[name];
+
+                    // Return value of attribute
+                    return finalReturn;
+                }
             },
 
             // Add event listeners
@@ -493,6 +504,78 @@ void function main(i) {
                 else {
                     // Remove the element
                     elements.remove();
+                }
+            },
+
+            // Appending and element to somewhere
+            append: (wtel) => {
+                // If `wtel` is something weird
+                if (!wtel || !wtel.el || !checkDataType(wtel, "obj")) {
+                    throw new Error("Make sure the argument passed in is made with one of WebTool's method for creating elements.");
+                }
+                
+                // If created with WebTool's `$doc.createList()`
+                if (wtel.special === "new-list-el") {
+                    wtel.el.innerHTML = "";
+                    for (i = 0; i < wtel.liItems.length; i++) {
+                        wtel.el.innerHTML += `<li>${wtel.liItems[i]}</li>`;
+                    }
+                }
+                
+                // If created with `$doc.createTable()`
+                else if (wtel.special === "new-table-el") {
+                    // New table element and final inner HTML
+                    const tableEl = document.createElement("table");
+                    let final = ``;
+
+                    // If user wants the first row to be the table heading
+                    if (wtel.tableHasHeading) {
+                        final += `<thead><tr>`;
+                        for (i = 0; i < wtel.tableData[0].length; i++) {
+                            final += `<th>${wtel.tableData[0][i]}</th>`;
+                        }
+                        final += `</tr></thead><tbody>`;
+                    }
+                    
+                    // Otherwise
+                    else {
+                        final += `<tbody>`;
+                    }
+
+                    // Put tbody element
+                    void function tbody() {
+                        // Change `i` depending on whether the user wants a heading
+                        !!wtel.tableHasHeading ? i = 1 : i = 0;
+
+                        // Loop through the data
+                        for (; i < wtel.tableData.length; i++) {
+                            let tr = `<tr>`;
+                            for (let j = 0; j < wtel.tableData[i].length; j++) {
+                                tr += `<td>${wtel.tableData[i][j]}</td>`;
+                            }
+                            tr += `</tr>`;
+                            final += tr;
+                        }
+
+                        // Final touches
+                        final += `</tbody>`;
+                        tableEl.innerHTML = final;
+                        wtel.el = tableEl;
+                    }();
+                }
+
+                // If multiple elements selected
+                if (elements.length) {
+                    // Loop through the elements
+                    for (i = 0; i < elements.length; i++) {
+                        elements[i].appendChild(wtel.el);
+                    }
+                }
+
+                // If one element selected
+                else {
+                    // Append child
+                    elements.appendChild(wtel.el);
                 }
             }
         };
@@ -540,8 +623,21 @@ void function main(i) {
     // Create a new element
     $WEBTOOL_DOC.create = (info) => {
         // If `info` is not an object
-        if (!checkDataType(info, "obj")) {
-            throw new Error("Argument must be an object");
+        if (!info) {
+            throw new Error("Argument must be an object or a string");
+        }
+        if (!checkDataType(info, "obj") && !checkDataType(info, "str")) {
+            throw new Error("Argument must be an object or a string");
+        }
+
+        // If `info` is a string
+        if (checkDataType(info, "str")) {
+            try {
+                const element = document.createElement(info);
+                return selectorMethods(element);
+            } catch (err) {
+                throw new Error("The argument must be a valid selector");
+            }
         }
 
         // If `info.name` is not a string
@@ -549,20 +645,15 @@ void function main(i) {
             throw new Error("The name property must be a string");
         }
 
-        // If `info.append` is not a string
-        if (!checkDataType(info.append, "str")) {
-            throw new Error("The append property must be a string");
-        }
-
         // Store the object's values
         let cls;
         const el = info.name,
-              to = info.append,
               id = info.id,
             attr = info.attr,
             html = info.html,
             text = info.text,
-              css = info.css;
+             css = info.css,
+              to = info.append;
         
         // Set `cls` variable
         for (; info.cls || info["class"] || info.className;) {
@@ -576,166 +667,210 @@ void function main(i) {
                 cls = info.className;
             }
         }
+        
+        // Create the element
+        const element = document.createElement(el);
 
-        // Define append elements
-        const elTo = document.querySelectorAll(to);
-
-        // Loop through append elements
-        for (i = 0; i < elTo.length; i++) {
-            // Create the element
-            const element = document.createElement(el);
-
-            // If user specified `info.html,` set the inner HTML of the new element
-            if (html) {
-                element.innerHTML = html;
-            }
-
-            // If user specified `info.text,` set the text of the new element
-            if (text) {
-                element.textContent = text;
-            }
-
-            // If user specified `info.css,` set the css
-            if (css) {
-                // If `info.css` is a string
-                if (checkDataType(css, "str")) {
-                    element.style = css;
-                }
-
-                // If `info.css` is an object
-                if (checkDataType(css, "obj")) {
-                    // Final CSS
-                    let final = ``;
-
-                    // Loop through object, then set the final CSs
-                    for (const j in css) {
-                        final += `${j}: ${css[j]};`;
-                    }
-                    element.style = final;
-                }
-            }
-
-            // If user specified `info.id,` set the ID
-            if (id) {
-                element.id = id;
-            }
-
-            // If user specified a class, set the class
-            if (cls) {
-                // If the class value is not a string nor an array, throw an error
-                if (!checkDataType(cls, "str") && !checkDataType(cls, "array")) {
-                    throw new Error("The class must be a string or an array");
-                }
-                
-                // If class is a string, set the class
-                if (checkDataType(cls, "str")) {
-                    element.className = cls;
-                }
-
-                // If class is an array, set the classes
-                if (checkDataType(cls, "arr")) {
-                    // Final
-                    let final = ``;
-
-                    // Loop through the array
-                    for (let j = 0; j < cls.length; j++) {
-                        final += ` ${cls[j]}`;
-                    }
-
-                    // Set the classes
-                    element.className = final;
-                }
-            }
-
-            // If user specified (an) attribute(s), set them
-            if (attr) {
-                if (!checkDataType(attr, "obj")) {
-                    throw new Error("The attr property must be an object");
-                }
-                if (checkDataType(attr, "obj")) {
-                    for (const j in attr) {
-                        element.setAttribute(j, attr[j]);
-                    }
-                }
-            }
-
-            // Append the element
-            elTo[i].appendChild(element);
+        // If user specified `info.html,` set the inner HTML of the new element
+        if (html) {
+            element.innerHTML = html;
         }
+
+        // If user specified `info.text,` set the text of the new element
+        if (text) {
+            element.textContent = text;
+        }
+
+        // If user specified `info.css,` set the css
+        if (css) {
+            // If `info.css` is a string
+            if (checkDataType(css, "str")) {
+                element.style = css;
+            }
+
+            // If `info.css` is an object
+            if (checkDataType(css, "obj")) {
+                // Final CSS
+                let final = ``;
+
+                // Loop through object, then set the final CSs
+                for (const j in css) {
+                    final += `${j}: ${css[j]};`;
+                }
+                element.style = final;
+            }
+        }
+
+        // If user specified `info.id,` set the ID
+        if (id) {
+            element.id = id;
+        }
+
+        // If user specified a class, set the class
+        if (cls) {
+            // If the class value is not a string nor an array, throw an error
+            if (!checkDataType(cls, "str") && !checkDataType(cls, "array")) {
+                throw new Error("The class must be a string or an array");
+            }
+            
+            // If class is a string, set the class
+            if (checkDataType(cls, "str")) {
+                element.className = cls;
+            }
+
+            // If class is an array, set the classes
+            if (checkDataType(cls, "arr")) {
+                // Final
+                let final = ``;
+
+                // Loop through the array
+                for (let j = 0; j < cls.length; j++) {
+                    final += ` ${cls[j]}`;
+                }
+
+                // Set the classes
+                element.className = final;
+            }
+        }
+
+        // If user specified (an) attribute(s), set them
+        if (attr) {
+            if (!checkDataType(attr, "obj")) {
+                throw new Error("The attr property must be an object");
+            }
+            if (checkDataType(attr, "obj")) {
+                for (const j in attr) {
+                    element.setAttribute(j, attr[j]);
+                }
+            }
+        }
+
+        // If user specified where to append it, append it
+        if (to) {
+            try {
+                const elTo = document.querySelectorAll(to);
+                for (i = 0; i < elTo.length; i++) {
+                    elTo[i].appendChild(element);
+                }
+            } catch (err) {
+                throw new Error("The append property should be a valid selector");
+            }
+            return;
+        }
+
+        // Return the element; the return value can be used in `append()`
+        return selectorMethods(element);
     };
     
     // Create a list
     $WEBTOOL_DOC.createList = (info) => {
-        // Checks if user provided an object
-        if (!checkDataType(info, "obj")) {
-            throw new Error("The argument must be an object");
+        // Checks if `info` is defined
+        if (!info) {
+            throw new Error("The argument must be an object or a string");
+        }
+        if (!checkDataType(info, "obj") && !checkDataType(info, "str")) {
+            throw new Error("The argument must be an object or a string");
         }
 
-        // Checks for incorrect data types
-        if (!checkDataType(info.li, "arr")) {
-            throw new Error("The li property must be an array");
-        }
-        if (!checkDataType(info.type, "str")) {
-            throw new Error("The type property must be a string")
-        }
-        
-        // Variables
-        let list, final = ``, i2 = -1;
-
-        // Create DOM element
-        switch (info.type.toLowerCase()) {
-            case "ul":
-                list = document.createElement("ul");
-                break;
-            case "ol":
-                list = document.createElement("ol");
-                break;
-            default:
-                throw new Error("The type property should be 'ul' or 'ol'");
-                break;
-        }
-
-        // Loop through the list and add HTML content to the DOM element
-        while (++i2 < info.li.length) {
-            list.innerHTML += `<li>${info.li[i2]}</li>`;
-        }
-        
-        // The user might put an invalid selector
-        try {
-            // Append list to the specified elements
-            const elTo = document.querySelectorAll(info.append);
-            for (i = 0; i < elTo.length; i++) {
-                elTo[i].appendChild(list);
+        // If `info` is a string
+        if (checkDataType(info, "str")) {
+            let listEl = null, finalReturn = null;
+            switch (info.toLowerCase()) {
+                case "ul":
+                    listEl = document.createElement("ul");
+                    break;
+                case "ol":
+                    listEl = document.createElement("ol");
+                    break;
+                default:
+                    throw new Error("The argument must be 'ul' or 'ol'");
+                    break;
             }
+            finalReturn = selectorMethods(listEl);
+            finalReturn.special = "new-list-el";
+            finalReturn.liType = info.toLowerCase();
+            finalReturn.liCont = [];
+            return finalReturn;
         }
-        
-        // If invalid selector for `info.append`, throw an error
-        catch (err) {
-            throw new Error("Invalid selector for the append property");
+
+        // If `info` is an object
+        if (checkDataType(info, "obj")) {
+            // Checks for incorrect data types
+            if (!checkDataType(info.type, "str")) {
+                throw new Error("The type property must be a string");
+            }
+            
+            // Variables
+            let list, finalReturn, i2 = -1;
+
+            // Create DOM element
+            switch (info.type.toLowerCase()) {
+                case "ul":
+                    list = document.createElement("ul");
+                    break;
+                case "ol":
+                    list = document.createElement("ol");
+                    break;
+                default:
+                    throw new Error("The type property should be 'ul' or 'ol'");
+                    break;
+            }
+            
+            // If user wanted to append list immediately
+            if (info.append && info.items) {
+                // Loop through the list and add HTML content to the DOM element
+                while (++i2 < info.items.length) {
+                    list.innerHTML += `<li>${info.items[i2]}</li>`;
+                }
+            }
+            
+            // If user specified an `append` property
+            if (info.append) {
+                // The user might put an invalid selector
+                try {
+                    // Append list to the specified elements
+                    const elTo = document.querySelectorAll(info.append);
+                    for (i = 0; i < elTo.length; i++) {
+                        elTo[i].appendChild(list);
+                    }
+                }
+                
+                // If invalid selector for `info.append`, throw an error
+                catch (err) {
+                    throw new Error("Invalid selector for the append property");
+                }
+            }
+
+            // Otherwise
+            else {
+                finalReturn = selectorMethods(list);
+                finalReturn.special = "new-list-el";
+                finalReturn.liType = info.type.toLowerCase();
+                finalReturn.liItems = info.items;
+                return finalReturn;
+            }
         }
     };
 
     // Create a table
     $WEBTOOL_DOC.createTable = (info) => {
-        // Final
-        let final = `<table>`;
+        // Variables
+        let el = document.createElement("table"), final = ``;
         
         // Check data types
+        if (!info) {
+            const finalReturn = selectorMethods(el);
+            finalReturn.special = "new-table-el";
+            finalReturn.tableData = [];
+            finalReturn.tableHasHeading = false;
+            return finalReturn;
+        }
         if (!checkDataType(info, "obj")) {
             throw new Error("The argument must be an object");
-        }
-        if (!checkDataType(info.data, "arr")) {
-            throw new Error("The data property must be an array");
-        }
-        if (!checkDataType(info.append, "str")) {
-            throw new Error("The append property must be a string");
         }
         
         // If data is an array
         if (checkDataType(info.data, "arr")) {
-            // Append element
-            const elTo = document.querySelectorAll(info.append);
-
             // If user wants the first row to be the table heading
             if (info.hasHeading) {
                 final += `<thead><tr>`;
@@ -766,16 +901,29 @@ void function main(i) {
                 }
 
                 // Final touches
-                final += `</tbody></table>`;
+                final += `</tbody>`;
+                el.innerHTML = final;
             }();
+            
+            // If user wanted to append immediately
+            if (info.append) {
+                // Append element
+                const elTo = document.querySelectorAll(info.append);
 
-            // Loop through all the elements
-            for (i = 0; i < elTo.length; i++) {
-                elTo[i].innerHTML += final;
+                // Loop through all the elements
+                for (i = 0; i < elTo.length; i++) {
+                    elTo[i].appendChild(el);
+                }
             }
 
-            // Return
-            return;
+            // Otherwise
+            else {
+                const finalReturn = selectorMethods(el);
+                finalReturn.special = "new-table-el";
+                finalReturn.tableData = info.data;
+                finalReturn.tableHasHeading = info.hasHeading;
+                return finalReturn;
+            }
         }
     };
 
