@@ -1,7 +1,16 @@
-/* WebTool - Version A3 */
+/* WebTool - Version A4 */
 
 // Use strict mode
 "use strict";
+
+// Custom WebTool error
+class WebToolError extends Error {
+    constructor(message) {
+        super(message);
+        this.name = "WebToolError";
+        this.message = message;
+    }
+}
 
 // Main function for selecting elements
 let $WEBTOOL_DOC = () => {};
@@ -11,7 +20,7 @@ let $WEBTOOL_WIN = {
     // Properties for the URL
     domain: document.domain,
     url: location.href,
-    urlAnchor: location.hash,
+    hash: location.hash,
 
     // Width and height (not including scrollbar)
     width: window.visualViewport.width,
@@ -22,11 +31,27 @@ let $WEBTOOL_WIN = {
     viewportHeight: window.innerHeight,
 
     // Alert pop-up message
-    alert: (txt) => {
+    alert: txt => {
         if (!txt) {
             txt = "";
         }
         window.alert(txt);
+    },
+
+    // Confirm message
+    confirm: txt => {
+        if (!txt) {
+            throw new WebToolError("Please enter some text");
+        }
+        return window.confirm(txt);
+    },
+
+    // Prompt/ask message
+    ask: txt => {
+        if (!txt) {
+            throw new WebToolError("Please enter some text");
+        }
+        return window.prompt(txt);
     }
 };
 
@@ -57,6 +82,12 @@ void function main(i) {
         }
     };
 
+    // Checks if the object is a DOM element
+    const isDOM = obj => obj instanceof Element;
+
+    // Checks if two objects are the same
+    const isSameObj = (obj1, obj2) => !!(JSON.stringify(obj1) == JSON.stringify(obj2));
+
     // Open a new tab/window
     $WEBTOOL_WIN.open = (url, target) => {
         // Final method to open a new tab
@@ -64,12 +95,12 @@ void function main(i) {
 
         // If `url` is not a string, throw an error
         if (!checkDataType(url, "str")) {
-            throw new Error("First argument must be a string");
+            throw new WebToolError("First argument must be a string");
         }
 
         // If `target` is not a string and not undefined, throw an error
         if (!checkDataType(target, "str") && typeof target !== "undefined") {
-            throw new Error("Second argument must be a string");
+            throw new WebToolError("Second argument must be a string");
         }
 
         // If `target` is undefined, default target is "_self"
@@ -89,12 +120,12 @@ void function main(i) {
     $WEBTOOL_WIN.update = (ms, callback) => {
         // Checks if `ms` is a number
         if (!checkDataType(ms, "num")) {
-            throw new Error("The first argument must be a number");
+            throw new WebToolError("The first argument must be a number");
         }
 
         // Checks is `callback` is a function
         if (!checkDataType(callback, "func")) {
-            throw new Error("The second argument must be a callback function");
+            throw new WebToolError("The second argument must be a callback function");
         }
 
         // Set interval
@@ -323,7 +354,7 @@ void function main(i) {
                 if (!checkDataType(cls, "str") &&
                     !checkDataType(cls, "arr")) {
                     // Throw an error
-                    throw new Error("Argument must be a string or an arrar");
+                    throw new WebToolError("Argument must be a string or an array");
                 }
 
                 // If argument is a string
@@ -375,17 +406,17 @@ void function main(i) {
 
                 // If `name` is an invalid data type, throw an error
                 if (!name) {
-                    throw new Error("The first argument must be a string or an object");
+                    throw new WebToolError("The first argument must be a string or an object");
                 }
                 if (!checkDataType(name, "str") && !checkDataType(name, "obj")) {
-                    throw new Error("The first argument must be a string or an object");
+                    throw new WebToolError("The first argument must be a string or an object");
                 }
                 
                 // If `name` is a string
                 if (checkDataType(name, "str")) {
                     // If `val` is not a string, throw an error
                     if (!checkDataType(val, "str")) {
-                        throw new Error("The second argument must be a string");
+                        throw new WebToolError("The second argument must be a string");
                     }
 
                     // If `val` is a string
@@ -465,12 +496,12 @@ void function main(i) {
             event: (evt, code) => {
                 // If `evt` is not a string, then throw an error
                 if (!checkDataType(evt, "str")) {
-                    throw new Error("First argument must be a string");
+                    throw new WebToolError("First argument must be a string");
                 }
 
                 // If `code` is not a function, then throw an error
                 if (!checkDataType(code, "func")) {
-                    throw new Error("Second argument must be a function");
+                    throw new WebToolError("Second argument must be a function");
                 }
 
                 // If the user selected multiple elements
@@ -511,7 +542,7 @@ void function main(i) {
             append: (wtel) => {
                 // If `wtel` is something weird
                 if (!wtel || !wtel.el || !checkDataType(wtel, "obj")) {
-                    throw new Error("Make sure the argument passed in is made with one of WebTool's method for creating elements.");
+                    throw new WebToolError("Make sure the argument passed in is made with one of WebTool's method for creating elements.");
                 }
                 
                 // If created with WebTool's `$doc.createList()`
@@ -608,26 +639,27 @@ void function main(i) {
 
             // Throw the error
             if (err === errors.notStr) {
-                throw new Error(err);
+                throw new WebToolError(err);
             } else {
-                throw new Error(defaultErr);
+                throw new WebToolError(defaultErr);
             }
         }
     };
 
-    // Head, body, and title elements
+    // HTML, Head, body, and title elements
+    $WEBTOOL_DOC.docElement = selectorMethods(document.documentElement);
     $WEBTOOL_DOC.head = selectorMethods(document.head);
     $WEBTOOL_DOC.body = selectorMethods(document.body);
-    $WEBTOOL_DOC.title = selectorMethods(document.title);
+    $WEBTOOL_DOC.title = selectorMethods(document.querySelector("title"));
 
     // Create a new element
     $WEBTOOL_DOC.create = (info) => {
         // If `info` is not an object
         if (!info) {
-            throw new Error("Argument must be an object or a string");
+            throw new WebToolError("Argument must be an object or a string");
         }
         if (!checkDataType(info, "obj") && !checkDataType(info, "str")) {
-            throw new Error("Argument must be an object or a string");
+            throw new WebToolError("Argument must be an object or a string");
         }
 
         // If `info` is a string
@@ -636,13 +668,13 @@ void function main(i) {
                 const element = document.createElement(info);
                 return selectorMethods(element);
             } catch (err) {
-                throw new Error("The argument must be a valid selector");
+                throw new WebToolError("The argument must be a valid selector");
             }
         }
 
         // If `info.name` is not a string
         if (!checkDataType(info.name, "str")) {
-            throw new Error("The name property must be a string");
+            throw new WebToolError("The name property must be a string");
         }
 
         // Store the object's values
@@ -710,7 +742,7 @@ void function main(i) {
         if (cls) {
             // If the class value is not a string nor an array, throw an error
             if (!checkDataType(cls, "str") && !checkDataType(cls, "array")) {
-                throw new Error("The class must be a string or an array");
+                throw new WebToolError("The class must be a string or an array");
             }
             
             // If class is a string, set the class
@@ -736,7 +768,7 @@ void function main(i) {
         // If user specified (an) attribute(s), set them
         if (attr) {
             if (!checkDataType(attr, "obj")) {
-                throw new Error("The attr property must be an object");
+                throw new WebToolError("The attr property must be an object");
             }
             if (checkDataType(attr, "obj")) {
                 for (const j in attr) {
@@ -753,7 +785,7 @@ void function main(i) {
                     elTo[i].appendChild(element);
                 }
             } catch (err) {
-                throw new Error("The append property should be a valid selector");
+                throw new WebToolError("The append property should be a valid selector");
             }
             return;
         }
@@ -766,10 +798,10 @@ void function main(i) {
     $WEBTOOL_DOC.createList = (info) => {
         // Checks if `info` is defined
         if (!info) {
-            throw new Error("The argument must be an object or a string");
+            throw new WebToolError("The argument must be an object or a string");
         }
         if (!checkDataType(info, "obj") && !checkDataType(info, "str")) {
-            throw new Error("The argument must be an object or a string");
+            throw new WebToolError("The argument must be an object or a string");
         }
 
         // If `info` is a string
@@ -783,7 +815,7 @@ void function main(i) {
                     listEl = document.createElement("ol");
                     break;
                 default:
-                    throw new Error("The argument must be 'ul' or 'ol'");
+                    throw new WebToolError("The argument must be 'ul' or 'ol'");
                     break;
             }
             finalReturn = selectorMethods(listEl);
@@ -797,7 +829,7 @@ void function main(i) {
         if (checkDataType(info, "obj")) {
             // Checks for incorrect data types
             if (!checkDataType(info.type, "str")) {
-                throw new Error("The type property must be a string");
+                throw new WebToolError("The type property must be a string");
             }
             
             // Variables
@@ -812,7 +844,7 @@ void function main(i) {
                     list = document.createElement("ol");
                     break;
                 default:
-                    throw new Error("The type property should be 'ul' or 'ol'");
+                    throw new WebToolError("The type property should be 'ul' or 'ol'");
                     break;
             }
             
@@ -837,7 +869,7 @@ void function main(i) {
                 
                 // If invalid selector for `info.append`, throw an error
                 catch (err) {
-                    throw new Error("Invalid selector for the append property");
+                    throw new WebToolError("Invalid selector for the append property");
                 }
             }
 
@@ -866,7 +898,7 @@ void function main(i) {
             return finalReturn;
         }
         if (!checkDataType(info, "obj")) {
-            throw new Error("The argument must be an object");
+            throw new WebToolError("The argument must be an object");
         }
         
         // If data is an array
