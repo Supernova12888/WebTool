@@ -1,4 +1,4 @@
-/* WebTool - Version A4 */
+/* WebTool - Version A5 */
 
 // Use strict mode
 "use strict";
@@ -400,10 +400,8 @@ void function main(i) {
                 }
             },
 
-            // Setting an attribute
-            setAttr: (name, val) => {
-                console.log(val);
-
+            // Get or set an attribute
+            attr: (name, val) => {
                 // If `name` is an invalid data type, throw an error
                 if (!name) {
                     throw new WebToolError("The first argument must be a string or an object");
@@ -414,11 +412,6 @@ void function main(i) {
                 
                 // If `name` is a string
                 if (checkDataType(name, "str")) {
-                    // If `val` is not a string, throw an error
-                    if (!checkDataType(val, "str")) {
-                        throw new WebToolError("The second argument must be a string");
-                    }
-
                     // If `val` is a string
                     // (this will set the attribute)
                     if (checkDataType(val, "str")) {
@@ -437,6 +430,33 @@ void function main(i) {
 
                         // Stop function
                         return;
+                    }
+
+                    // If `val` is not a string
+                    // (this will get the attribute's value)
+                    else {
+                        // Final return value
+                        let finalReturn = [];
+
+                        // If more than one element selected
+                        if (elements.length) {
+                            // Loop through the elements
+                            for (i = 0; i < elements.length; i++) {
+                                finalReturn.push(elements[i][name]);
+                            }
+
+                            // Return all attribute values
+                            return finalReturn;
+                        }
+
+                        // If one element selected
+                        else {
+                            // Set `finalReturn` to the value of the attribute
+                            finalReturn = elements[name];
+
+                            // Return value of attribute
+                            return finalReturn;
+                        }
                     }
                 }
 
@@ -466,34 +486,8 @@ void function main(i) {
                 }
             },
 
-            // Getting an attribute
-            getAttr: (name) => {
-                // Final return value
-                let finalReturn = [];
-
-                // If more than one element selected
-                if (elements.length) {
-                    // Loop through the elements
-                    for (i = 0; i < elements.length; i++) {
-                        finalReturn.push(elements[i][name]);
-                    }
-
-                    // Return all attribute values
-                    return finalReturn;
-                }
-
-                // If one element selected
-                else {
-                    // Set `finalReturn` to the value of the attribute
-                    finalReturn = elements[name];
-
-                    // Return value of attribute
-                    return finalReturn;
-                }
-            },
-
             // Add event listeners
-            event: (evt, code) => {
+            event: (evt, code, remove) => {
                 // If `evt` is not a string, then throw an error
                 if (!checkDataType(evt, "str")) {
                     throw new WebToolError("First argument must be a string");
@@ -508,15 +502,29 @@ void function main(i) {
                 if (elements.length) {
                     // Loop through the elements
                     for (i = 0; i < elements.length; i++) {
-                        // Add event listener
-                        elements[i].addEventListener(evt, code);
+                        // If user wants to add an event, add it
+                        if (!remove) {
+                            elements[i].addEventListener(evt, code);
+                        }
+
+                        // Otherwise, delete the event
+                        else {
+                            elements[i].removeEventListener(evt, code);
+                        }
                     }
                 }
 
                 // If user selected one element
                 else {
-                    // Add event listener
-                    elements.addEventListener(evt, code);
+                    // If user wants to add an event, add it
+                    if (!remove) {
+                        elements.addEventListener(evt, code);
+                    }
+
+                    // Otherwise, delete it
+                    else {
+                        elements.removeEventListener(evt, code);
+                    }
                 }
             },
 
@@ -538,11 +546,54 @@ void function main(i) {
                 }
             },
 
-            // Appending and element to somewhere
+            // Prepend an element to somewhere
+            prepend: (wtel) => {
+                // If `wtel` is undefined
+                if (!wtel) {
+                    throw new WebToolError("The argument must also be a string.");
+                }
+
+                // If multiple elements selected
+                if (elements.length) {
+                    // Loop through the elements and append the string
+                    for (i = 0; i < wtel.length; i++) {
+                        elements[i].prepend(wtel.toString());
+                    }
+                }
+
+                // If one element selected
+                else {
+                    elements.prepend(wtel.toString());
+                }
+
+                // Return
+                return;
+            },
+
+            // Append an element to somewhere
             append: (wtel) => {
                 // If `wtel` is something weird
-                if (!wtel || !wtel.el || !checkDataType(wtel, "obj")) {
-                    throw new WebToolError("Make sure the argument passed in is made with one of WebTool's method for creating elements.");
+                if (!wtel) {
+                    throw new WebToolError("Make sure the argument passed in is made with one of WebTool's method for creating elements. The argument may also be a string.");
+                }
+
+                // If `wtel` is a string
+                if (!checkDataType(wtel, "obj")) {
+                    // If multiple elements selected
+                    if (elements.length) {
+                        // Loop through the elements and append the string
+                        for (i = 0; i < wtel.length; i++) {
+                            elements[i].append(wtel.toString());
+                        }
+                    }
+
+                    // If one element selected
+                    else {
+                        elements.append(wtel.toString());
+                    }
+
+                    // Return
+                    return;
                 }
                 
                 // If created with WebTool's `$doc.createList()`
@@ -594,19 +645,21 @@ void function main(i) {
                         wtel.el = tableEl;
                     }();
                 }
-
-                // If multiple elements selected
-                if (elements.length) {
-                    // Loop through the elements
-                    for (i = 0; i < elements.length; i++) {
-                        elements[i].appendChild(wtel.el);
+                
+                if (wtel.el) {
+                    // If multiple elements selected
+                    if (elements.length) {
+                        // Loop through the elements
+                        for (i = 0; i < elements.length; i++) {
+                            elements[i].appendChild(wtel.el);
+                        }
                     }
-                }
 
-                // If one element selected
-                else {
-                    // Append child
-                    elements.appendChild(wtel.el);
+                    // If one element selected
+                    else {
+                        // Append child
+                        elements.appendChild(wtel.el);
+                    }
                 }
             }
         };
