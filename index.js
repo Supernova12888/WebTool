@@ -1,4 +1,4 @@
-/* WebTool - Version A5 */
+/* WebTool - Version B1 */
 
 // Use strict mode
 "use strict";
@@ -13,10 +13,10 @@ class WebToolError extends Error {
 }
 
 // Main function for selecting elements
-let $WEBTOOL_DOC = () => {};
+let $WEBTOOL_DOM = () => {};
 
 // Window variable
-let $WEBTOOL_WIN = {
+let $WEBTOOL_BOM = {
     // Properties for the URL
     domain: document.domain,
     url: location.href,
@@ -89,7 +89,7 @@ void function main(i) {
     const isSameObj = (obj1, obj2) => !!(JSON.stringify(obj1) == JSON.stringify(obj2));
 
     // Open a new tab/window
-    $WEBTOOL_WIN.open = (url, target) => {
+    $WEBTOOL_BOM.open = (url, target) => {
         // Final method to open a new tab
         let finalTarget;
 
@@ -112,12 +112,12 @@ void function main(i) {
     };
 
     // Close the current tab or window
-    $WEBTOOL_WIN.close = () => {
+    $WEBTOOL_BOM.close = () => {
         window.close();
     };
 
     // Do something every specified milliseconds
-    $WEBTOOL_WIN.update = (ms, callback) => {
+    $WEBTOOL_BOM.update = (ms, callback) => {
         // Checks if `ms` is a number
         if (!checkDataType(ms, "num")) {
             throw new WebToolError("The first argument must be a number");
@@ -143,52 +143,34 @@ void function main(i) {
                 // Checks if `elements.length` is true
                 if (elements.length) {
                     // Final return array if `str` is undefined
-                    let finalReturn = [];
+                    let finalReturn = ``;
 
                     // Loop through the elements
                     for (i = 0; i < elements.length; i++) {
-                        if (str) {
+                        if (typeof str !== "undefined" && str.toString()) {
                             // If `str` is defined, set all the elements' html to the value in `str`
-                            elements[i].innerHTML = str;
+                            elements[i].innerHTML = str.toString();
                         } else {
                             // If `str` is not defined, push all the elements into the `finalReturn` array
-                            finalReturn.push(elements[i].innerHTML);
+                            finalReturn += elements[i].innerHTML;
                         }
                     }
 
-                    // If `str` is undefined, return the array of elements
-                    if (!str) {
+                    // If `str` is undefined, return all HTML
+                    if (typeof str === "undefined") {
                         return finalReturn;
                     }
                 }
                 
                 // If `elements.length` is false
                 else {
-                    if (str) {
+                    if (typeof str !== "undefined" && str.toString()) {
                         // If `str` is defined, set the specified element's inner HTML to the value of `str`
-                        elements.innerHTML = str;
+                        elements.innerHTML = str.toString();
                     } else {
                         // Otherwise, return the current inner HTML
                         return elements.innerHTML;
                     }
-                }
-            },
-
-            // Add HTML to the end of inner HTML function
-            addHtml: str => {
-                // If there are multiple elements selected
-                if (elements.length) {
-                    // Loop through all elements selected
-                    for (i = 0; i < elements.length; i++) {
-                        // Add `str` to the end of inner HTML
-                        elements[i].innerHTML += str;
-                    }
-                }
-                
-                // If there is only on element selected
-                else {
-                    // Add `str` to the end of inner HTML
-                    elements.innerHTML += str;
                 }
             },
 
@@ -245,16 +227,16 @@ void function main(i) {
                 // If user selected multiple elements
                 if (elements.length) {
                     // Final return
-                    let finalReturn = [];
+                    let finalReturn = ``;
 
                     // Loops through the elements
                     for (i = 0; i < elements.length; i++) {
-                        if (str) {
+                        if (typeof str !== "undefined" && str.toString()) {
                             // If `str` is defined, set the text to the value of `str`
-                            elements[i].textContent = str;
+                            elements[i].innerText = str.toString();
                         } else {
                             // If `str` is not defined, push all the selected elements' text into an array
-                            finalReturn.push(elements[i].textContent);
+                            finalReturn += elements[i].innerText;
                         }
                     }
 
@@ -266,46 +248,42 @@ void function main(i) {
                 
                 // If user selected one element
                 else {
-                    if (str) {
+                    if (typeof str !== "undefined" && str.toString()) {
                         // If `str` is defined, set the text of the element to the value of `str`
-                        elements.textContent = str;
+                        elements.innerText = str.toString();
                     } else {
                         // If `str` is not defined, return the current text content
-                        return elements.textContent;
+                        return elements.innerText;
                     }
-                }
-            },
-
-            // Add text to the end of an element
-            addText: str => {
-                // If user selected multiple elements
-                if (elements.length) {
-                    // Loop through the elements
-                    for (i = 0; i < elements.length; i++) {
-                        // Add `str` to the end of text content
-                        elements[i].textContent += str;
-                    }
-                }
-                
-                // If user selected one element
-                else {
-                    // Add `str` to the end of text content
-                    elements.textContent += str;
                 }
             },
 
             // Set the ID of an element
-            setId: id => {
+            id: newId => {
                 // If user selected multiple elements
                 if (elements.length) {
-                    // Set the ID of the first element the browser finds
-                    elements[0].id = id;
+                    // If user wants to set ID, set it
+                    if (newId) {
+                        elements[0].id = newId;
+                    }
+
+                    // Otherwise, return the ID
+                    else {
+                        return elements[0].id;
+                    }
                 }
                 
                 // If user selected one element
                 else {
-                    // Set the ID
-                    elements.id = id;
+                    // If user wants to set the ID, set it
+                    if (newId) {
+                        elements.id = newId;
+                    }
+                    
+                    // Otherwise, return the ID
+                    else {
+                        return elements.id;
+                    }
                 }
             },
 
@@ -440,22 +418,12 @@ void function main(i) {
 
                         // If more than one element selected
                         if (elements.length) {
-                            // Loop through the elements
-                            for (i = 0; i < elements.length; i++) {
-                                finalReturn.push(elements[i][name]);
-                            }
-
-                            // Return all attribute values
-                            return finalReturn;
+                            return elements[0][name];
                         }
 
                         // If one element selected
                         else {
-                            // Set `finalReturn` to the value of the attribute
-                            finalReturn = elements[name];
-
-                            // Return value of attribute
-                            return finalReturn;
+                            return elements[name];
                         }
                     }
                 }
@@ -477,7 +445,7 @@ void function main(i) {
                         // If one element selected
                         else {
                             // Set the attribute
-                            elements.setAttribute(i2, name[i]);
+                            elements.setAttribute(i2, name[i2]);
                         }
                     }
 
@@ -578,7 +546,7 @@ void function main(i) {
                 }
 
                 // If `wtel` is a string
-                if (!checkDataType(wtel, "obj")) {
+                if (checkDataType(wtel, "str")) {
                     // If multiple elements selected
                     if (elements.length) {
                         // Loop through the elements and append the string
@@ -661,12 +629,33 @@ void function main(i) {
                         elements.appendChild(wtel.el);
                     }
                 }
+            },
+
+            // Do something with each element selected
+            each: callback => {
+                // Checks if argument is a function
+                if (!checkDataType(callback, "func")) {
+                    throw new WebToolError("The argument must be a function");
+                }
+
+                // If multiple elements selected
+                if (elements.length) {
+                    // Loop through every element and do something to it
+                    for (i = 0; i < elements.length; i++) {
+                        callback(selectorMethods(elements[i]), i);
+                    }
+                }
+
+                // If not
+                else {
+                    callback(selectorMethods(elements), 0);
+                }
             }
         };
     };
     
-    // Redefine $WEBTOOL_DOC function
-    $WEBTOOL_DOC = (sel) => {
+    // Redefine $WEBTOOL_DOM function
+    $WEBTOOL_DOM = (sel) => {
         // Store the different error messages
         const errors = {
             invalid: "Invalid selector",
@@ -682,7 +671,7 @@ void function main(i) {
 
             // Return
             const elements = document.querySelectorAll(sel);
-            return selectorMethods(elements)
+            return selectorMethods(elements);
         }
         
         // Catch the error
@@ -699,14 +688,14 @@ void function main(i) {
         }
     };
 
-    // HTML, Head, body, and title elements
-    $WEBTOOL_DOC.docElement = selectorMethods(document.documentElement);
-    $WEBTOOL_DOC.head = selectorMethods(document.head);
-    $WEBTOOL_DOC.body = selectorMethods(document.body);
-    $WEBTOOL_DOC.title = selectorMethods(document.querySelector("title"));
+    // HTML, head, body, and title elements
+    $WEBTOOL_DOM.docElement = selectorMethods(document.documentElement);
+    $WEBTOOL_DOM.head = selectorMethods(document.head);
+    $WEBTOOL_DOM.body = selectorMethods(document.body);
+    $WEBTOOL_DOM.title = selectorMethods(document.querySelector("title"));
 
     // Create a new element
-    $WEBTOOL_DOC.create = (info) => {
+    $WEBTOOL_DOM.create = (info) => {
         // If `info` is not an object
         if (!info) {
             throw new WebToolError("Argument must be an object or a string");
@@ -732,13 +721,8 @@ void function main(i) {
 
         // Store the object's values
         let cls;
-        const el = info.name,
-              id = info.id,
-            attr = info.attr,
-            html = info.html,
-            text = info.text,
-             css = info.css,
-              to = info.append;
+        const { id, attr, html, text, css } = info;
+        const el = info.name, to = info.append;
         
         // Set `cls` variable
         for (; info.cls || info["class"] || info.className;) {
@@ -848,7 +832,7 @@ void function main(i) {
     };
     
     // Create a list
-    $WEBTOOL_DOC.createList = (info) => {
+    $WEBTOOL_DOM.createList = (info) => {
         // Checks if `info` is defined
         if (!info) {
             throw new WebToolError("The argument must be an object or a string");
@@ -898,7 +882,6 @@ void function main(i) {
                     break;
                 default:
                     throw new WebToolError("The type property should be 'ul' or 'ol'");
-                    break;
             }
             
             // If user wanted to append list immediately
@@ -938,7 +921,7 @@ void function main(i) {
     };
 
     // Create a table
-    $WEBTOOL_DOC.createTable = (info) => {
+    $WEBTOOL_DOM.createTable = (info) => {
         // Variables
         let el = document.createElement("table"), final = ``;
         
@@ -1013,19 +996,19 @@ void function main(i) {
     };
 
     // Print things into body element
-    $WEBTOOL_DOC.print = (txt) => {
+    $WEBTOOL_DOM.print = (txt) => {
         document.body.innerHTML += txt;
     };
 
 }(0);
 
-// Define $doc
-const $doc = $WEBTOOL_DOC;
-$WEBTOOL_DOC = undefined;
+// Define $dom
+const $dom = $WEBTOOL_DOM;
+$WEBTOOL_DOM = undefined;
 
-// Define $win
-const $win = $WEBTOOL_WIN;
-$WEBTOOL_WIN = undefined;
+// Define $bom
+const $bom = $WEBTOOL_BOM;
+$WEBTOOL_BOM = undefined;
 
 
 
