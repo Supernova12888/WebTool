@@ -1,4 +1,4 @@
-/* WebTool - Version B1 */
+/* WebTool - Version B2 */
 
 // Use strict mode
 "use strict";
@@ -15,7 +15,7 @@ class WebToolError extends Error {
 // Main function for selecting elements
 let $WEBTOOL_DOM = () => {};
 
-// Window variable
+// BOM object
 let $WEBTOOL_BOM = {
     // Properties for the URL
     domain: document.domain,
@@ -55,6 +55,9 @@ let $WEBTOOL_BOM = {
     }
 };
 
+// Cookies object
+let $WEBTOOL_COOKIES = {};
+
 // Main
 void function main(i) {
 
@@ -89,7 +92,7 @@ void function main(i) {
     const isSameObj = (obj1, obj2) => !!(JSON.stringify(obj1) == JSON.stringify(obj2));
 
     // Open a new tab/window
-    $WEBTOOL_BOM.open = (url, target) => {
+    $WEBTOOL_BOM.open = (url, target, features) => {
         // Final method to open a new tab
         let finalTarget;
 
@@ -108,7 +111,7 @@ void function main(i) {
                 : finalTarget = target;
         
         // Open the page
-        window.open(url, finalTarget);
+        window.open(url, finalTarget, features ? features : undefined);
     };
 
     // Close the current tab or window
@@ -631,6 +634,26 @@ void function main(i) {
                 }
             },
 
+            // Click on an element
+            click: () => elements.length 
+                       ? elements[0].click()
+                       : elements.click(),
+            
+            // Focus on an element
+            focus: () => elements.length
+                       ? elements[0].focus()
+                       : elements.focus(),
+            
+            // Blur on an element
+            unfocus: () => elements.length
+                         ? elements[0].blur()
+                         : elements.blur(),
+            
+            // Blur on an element
+            blur: () => elements.length
+                      ? elements[0].blur()
+                      : elements.blur(),
+
             // Do something with each element selected
             each: callback => {
                 // Checks if argument is a function
@@ -693,6 +716,9 @@ void function main(i) {
     $WEBTOOL_DOM.head = selectorMethods(document.head);
     $WEBTOOL_DOM.body = selectorMethods(document.body);
     $WEBTOOL_DOM.title = selectorMethods(document.querySelector("title"));
+
+    // Charset of the document
+    $WEBTOOL_DOM.charset = document.characterSet;
 
     // Create a new element
     $WEBTOOL_DOM.create = (info) => {
@@ -1002,13 +1028,113 @@ void function main(i) {
 
 }(0);
 
-// Define $dom
+// Define `$dom`
 const $dom = $WEBTOOL_DOM;
 $WEBTOOL_DOM = undefined;
 
-// Define $bom
+// Define `$bom`
 const $bom = $WEBTOOL_BOM;
 $WEBTOOL_BOM = undefined;
+
+// Cookies proxy
+const $cookies = new Proxy($WEBTOOL_COOKIES, {
+    // Getting a cookie's value
+    // ($cookies.name)
+    get(target, property) {
+        // Variables
+        let name = encodeURIComponent(property) + "=",
+            start = document.cookie.indexOf(name),
+            value;
+        
+        // If it found the cookie
+        if (start > -1) {
+            // End of the cookie
+            let end = document.cookie.indexOf(";", start);
+
+            // If no semicolon found, the end must be at the end of the
+            // `document.cookie` string
+            if (end == -1) {
+                end = document.cookie.length;
+            }
+
+            // Get the value of the cookie
+            value = decodeURIComponent(document.cookie.substring(start + name.length, end));
+        }
+
+        // Return the value of the cookie
+        return value;
+    },
+
+    // Setting a cookie
+    // ($cookies.name = value)
+    set(target, property, newValue) {
+        // If is object
+        if (newValue.constructor === Object) {
+            // Destruct `newValue` object
+            const { value, expires, path, domain, secure } = newValue;
+
+            // Final
+            let final = `${encodeURIComponent(property)}=${encodeURIComponent(value)}`;
+
+            // Checks if it has expiration date, path, domain, and secure
+            if (expires instanceof Date) {
+                final += `; expires=${expires.toGMTString()}`;
+            }
+            if (path) {
+                final += `; path=${path}`;
+            }
+            if (domain) {
+                final += `; domain=${domain}`;
+            }
+            if (secure) {
+                final += `; secure`;
+            }
+
+            // Set the cookie
+            document.cookie = final;
+        }
+
+        // If something else
+        else {
+            document.cookie = `${encodeURIComponent(property)}=${encodeURIComponent(newValue.toString())}`;
+        }
+        
+        console.log(document.cookie);
+
+        // If this is a success or not
+        return Reflect.set(...arguments);
+    },
+
+    // Checks if has cookie
+    // ("name" in $cookies)
+    has(target, property) {
+        // Variables
+        let name = encodeURIComponent(property) + "=",
+            start = document.cookie.indexOf(name),
+            value;
+        
+        // If it found the cookie
+        if (start > -1) {
+            // End of the cookie
+            let end = document.cookie.indexOf(";", start);
+
+            // If no semicolon found, the end must be at the end of the
+            // `document.cookie` string
+            if (end == -1) {
+                end = document.cookie.length;
+            }
+
+            // Get the value of the cookie
+            value = decodeURIComponent(document.cookie.substring(start + name.length, end));
+        }
+
+        // Returns whether this cookie exists or not
+        return value;
+    }
+});
+
+// Remove `$WEBTOOL_COOKIES`
+$WEBTOOL_COOKIES = undefined;
 
 
 
