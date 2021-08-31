@@ -9,12 +9,6 @@ To install WebTool, just insert this piece of code into your HTML code. The `[VE
 <script src="https://cdn.jsdelivr.net/gh/Supernova12888/WebTool@[VERSION]/index.js"></script>
 ```
 
-## Documentation
-Take a look at WebTool's documentation by going [here](https://webtool.aquamarine.repl.co/documentation/#version-latest).
-
-## More Information
-For more information, visit WebTool's website [here](https://webtool.aquamarine.repl.co/).
-
 
 
 
